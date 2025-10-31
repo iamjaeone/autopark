@@ -7,6 +7,7 @@ column_names = ['Error', 'Integral', 'Derivative', 'MV']
 try:
     df = pd.read_csv(log_file_path, header=None, names=column_names)
 except FileNotFoundError:
+    print(f"Log file '{log_file_path}' not found.")
     exit()
 time_axis = df.index
 fig, axs = plt.subplots(4, 1, figsize=(15, 12), sharex=True)
