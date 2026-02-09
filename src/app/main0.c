@@ -1,139 +1,35 @@
 #include "main0.h"
-
-#include "ultrasonic.h"
-#include "tof.h"
-#include "level.h"
 #include "bluetooth.h"
-#include "motor.h"
+#include "autopark.h"
+#include "systeminit.h"
+#include "uart.h"
 
-#define MAX_STEERING 200
-
-int logging = 0;
-boolean start = FALSE;
-
-
-void main0 ()
+void main0(void)
 {
     systemInit();
-    myPrintf("SYSTEM START\n");
-    bluetoothPrintf("SYSTEM START\n");
-    float val;
+    myPrintf("System Initialized.\n");
+    bluetoothPrintf("System Initialized.\n");
     while (1)
     {
-        char command = bluetoothRecvByteNonBlocked();
-
-        if (command != -1)
+        bluetoothPrintf("Waiting for command...\n");
+        char command = bluetoothRecvByteBlocked();
+        bluetoothPrintf("Command: %c\n", command);
+        switch(command)
         {
-            bluetoothPrintf("COMMAND: %c\n", command);
-        }
-
-        if (command == 'g'){
-            int speed, round;
-            bluetoothPrintf("Speed(0 ~ 1000): ");
-            bluetoothScanf("%d", &speed);
-            bluetoothPrintf("Round: ");
-            bluetoothScanf("%d", &round);
-
-            while(round--){
-                motorMoveForward(speed);
-                delayMs(25);
-                motorStop();
-                delayMs(25);
-            }
-        }
-
-        if (command == 'c')
-        {
-            printState();
-            bluetoothPrintf("left dis: %d\n", getDistanceByUltra(ULT_LEFT));
-            bluetoothPrintf("rear dis: %d\n", getDistanceByUltra(ULT_REAR));
-        }
-
-        if (command == 'p')
-        {
-            int time;
-            int aDuty;
-            int bDuty;
-
-            bluetoothPrintf("aDuty, bDuty, Time: ");
-            bluetoothScanf("%d %d %d", &aDuty, &bDuty, &time);
-            if (aDuty > bDuty)
+            case 'p':
             {
-                motorMovChAPwm(aDuty, 1);
-                motorMovChBPwm(bDuty, 1);
+                autoparkExecute();
+                break;
             }
-            else
+            case 't':
             {
-                motorMovChAPwm(aDuty, 0);
-                motorMovChBPwm(bDuty, 0);
+                autoparkTune();
+                break;
             }
-            delayMs(time);
-            motorStop();
-        }
-
-        if (command == 'y')
-        {
-            bluetoothPrintf("Set Kp: ");
-            bluetoothScanf("%f", &val);
-            setGain(0, val);
-        }
-
-        if (command == 'u')
-        {
-            bluetoothPrintf("Set Ki: ");
-            bluetoothScanf("%f", &val);
-            setGain(1, val);
-        }
-
-        if (command == 'i')
-        {
-            bluetoothPrintf("Set Kd: ");
-            bluetoothScanf("%f", &val);
-            setGain(2, val);
-        }
-
-        if (command == 'o')
-        {
-            start = !start;
-            if (start)
+            default:
             {
-                motorMovChAPwm(300, 1);
-                motorMovChBPwm(300, 1);
-                levelInit(LEVEL_LEFT);
-                delayMs(50);
+                break;
             }
-            else
-            {
-                motorStop();
-            }
-        }
-
-        if (start)
-        {
-            int mv = getMv(LEVEL_LEFT);
-            if (mv < -MAX_STEERING)
-                mv = -MAX_STEERING;
-            if (mv > MAX_STEERING)
-                mv = MAX_STEERING;
-            bluetoothPrintf("%d\n", mv);
-            motorMovChAPwm(300 + mv, 1);
-            motorMovChBPwm(300 - mv, 1);
-            delayMs(50);
-        }
-        if (command == 'x')
-        {
-            motorStop();
-            start = FALSE;
-        }
-
-        if (command == 'w')
-        {
-            motorMoveForward(300);
-        }
-
-        if (command == 's')
-        {
-            motorMoveReverse(300);
         }
     }
 }

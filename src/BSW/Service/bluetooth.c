@@ -1,6 +1,5 @@
 #include "bluetooth.h"
 
-
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,14 +8,13 @@
 #include "asclin1.h"
 
 #include "Ifx_Types.h"
-#define BUFSIZE     128
+#define BUFSIZE 128
 #define KB_BS '\x7F'
 #define KB_CR '\r'
 
-
 void bluetoothIsr(char c)
 {
-//    myPrintf("%c", c);
+    //    myPrintf("%c", c);
 }
 
 void bluetoothInit(void)
@@ -35,8 +33,8 @@ void bluetoothAtCommand(char *cmd)
         i++;
     }
     asclin1OutUart(buf[i]);
-//    asclin1OutUart('\r');
-//    asclin1OutUart('\n');
+    asclin1OutUart('\r');
+    asclin1OutUart('\n');
 
     delayMs(300);
 }
@@ -86,11 +84,8 @@ void bluetoothPrintf(const char *fmt, ...)
     buffer2[j] = '\0';
 
     for (ptr = buffer2; *ptr; ++ptr)
-        bluetoothSendByteBlocked((const unsigned char) *ptr);
+        bluetoothSendByteBlocked((const unsigned char)*ptr);
 }
-
-
-
 
 void bluetoothScanf(const char *fmt, ...)
 {
@@ -105,19 +100,23 @@ void bluetoothScanf(const char *fmt, ...)
         c = asclin1InUart();
         if (c == KB_BS || c == 0x8)
         {
-            if (idx > 0) {
+            if (idx > 0)
+            {
                 buf[idx - 1] = 0;
                 idx--;
-                bluetoothPrintf("%c %c", 8,8);
+                bluetoothPrintf("%c %c", 8, 8);
             }
             continue;
         }
         else
         {
-            if (c == KB_CR) {
+            if (c == KB_CR)
+            {
                 idx += 1;
                 buf[idx] = '\0';
-            } else {
+            }
+            else
+            {
                 buf[idx] = c;
                 idx += 1;
             }
@@ -136,63 +135,94 @@ void bluetoothScanf(const char *fmt, ...)
             c = *fmt++;
             switch (c)
             {
-                case 'c':
-                    *va_arg(ap, char *) = buf[0];
-                    buf[0] = '\0';
-                    break;
-                case 'd':
-                    *va_arg(ap, int *) = atoi(buf);
+            case 'c':
+                *va_arg(ap, char *) = buf[0];
+                buf[0] = '\0';
+                break;
+            case 'd':
+                *va_arg(ap, int *) = atoi(buf);
+                pidx = strchr(buf, ' ');
+                if (pidx != NULL)
+                {
+                    *pidx = '\0';
+                }
+                for (i = 0;; i++)
+                {
+                    if (buf[i] == '\0' || buf[i] == ' ')
+                    {
+                        buf[i] = '\0';
+                        break;
+                    }
+                    buf[i] = '\0';
+                }
+                break;
+            case 's':
+                pstr = va_arg(ap, char *);
+                for (i = 0; buf[i] != '\0'; i++)
+                {
+                    *pstr++ = buf[i];
+                    buf[i] = '\0';
+                }
+                *pstr = '\0';
+                break;
+            case 'l':
+                c1 = *fmt++;
+                if (c1 == 'd')
+                {
+                    *va_arg(ap, long long *) = atoll(buf);
                     pidx = strchr(buf, ' ');
-                    if (pidx != NULL) { *pidx = '\0'; }
-                    for (i = 0; ; i++)
+                    if (pidx != NULL)
                     {
-                        if (buf[i] == '\0' || buf[i] == ' ') { buf[i] = '\0'; break; }
+                        *pidx = '\0';
+                    }
+                    for (i = 0;; i++)
+                    {
+                        if (buf[i] == '\0' || buf[i] == ' ')
+                        {
+                            buf[i] = '\0';
+                            break;
+                        }
                         buf[i] = '\0';
                     }
-                    break;
-                case 's':
-                    pstr = va_arg(ap, char *);
-                    for (i = 0; buf[i] != '\0'; i++)
-                    {
-                        *pstr++ = buf[i];
-                        buf[i] = '\0';
-                    }
-                    *pstr = '\0';
-                    break;
-                case 'l':
-                    c1 = *fmt++;
-                    if (c1 == 'd') {
-                        *va_arg(ap, long long *) = atoll(buf);
-                        pidx = strchr(buf, ' ');
-                        if (pidx != NULL) { *pidx = '\0'; }
-                        for (i = 0; ; i++)
-                        {
-                            if (buf[i] == '\0' || buf[i] == ' ') { buf[i] = '\0'; break; }
-                            buf[i] = '\0';
-                        }
-                    } else if (c1 == 'f') {
-                        *va_arg(ap, double *) = atof(buf);
-                        pidx = strchr(buf, ' ');
-                        if (pidx != NULL) { *pidx = '\0'; }
-                        for (int i = 0; ; i++)
-                        {
-                            if (buf[i] == '\0' || buf[i] == ' ') { buf[i] = '\0'; break; }
-                            buf[i] = '\0';
-                        }
-                    }
-                    break;
-                case 'f':
-                    *va_arg(ap, float *) = (float)(atof(buf));
+                }
+                else if (c1 == 'f')
+                {
+                    *va_arg(ap, double *) = atof(buf);
                     pidx = strchr(buf, ' ');
-                    if (pidx != NULL) { *pidx = '\0'; }
-                    for (i = 0; ; i++)
+                    if (pidx != NULL)
                     {
-                        if (buf[i] == '\0' || buf[i] == ' ') { buf[i] = '\0'; break; }
+                        *pidx = '\0';
+                    }
+                    for (int i = 0;; i++)
+                    {
+                        if (buf[i] == '\0' || buf[i] == ' ')
+                        {
+                            buf[i] = '\0';
+                            break;
+                        }
                         buf[i] = '\0';
                     }
-                    break;
-                default:
-                    break;
+                }
+                break;
+            case 'f':
+                *va_arg(ap, float *) = (float)(atof(buf));
+                pidx = strchr(buf, ' ');
+                if (pidx != NULL)
+                {
+                    *pidx = '\0';
+                }
+                for (i = 0;; i++)
+                {
+                    if (buf[i] == '\0' || buf[i] == ' ')
+                    {
+                        buf[i] = '\0';
+                        break;
+                    }
+                    buf[i] = '\0';
+                }
+                break;
+            default:
+                break;
             }
             remove_null(buf);
         }
@@ -206,7 +236,8 @@ static void remove_null(char *s)
     char buf[128];
 
     start_idx = 0;
-    while (*(s + start_idx++) == '\0');
+    while (*(s + start_idx++) == '\0')
+        ;
     memset(buf, 0, 128);
     strcpy(buf, (s + (start_idx - 1)));
 
@@ -219,6 +250,3 @@ static void remove_null(char *s)
     }
     *(s + i) = '\0';
 }
-
-
-

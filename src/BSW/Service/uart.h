@@ -6,10 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bluetooth.h"
 #include "asclin0.h"
-
 #include "Ifx_Types.h"
+
 #define BUFSIZE     128
 #define KB_BS '\x7F'
 #define KB_CR '\r'

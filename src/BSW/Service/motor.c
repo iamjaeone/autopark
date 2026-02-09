@@ -58,8 +58,28 @@ void motorMovChBPwm(int duty, int dir)
 
 void motorSoftBraking(int duty)
 {
+    while (duty > 0)
+    {
+        duty = (duty >= 100) ? duty - 100 : 0;
+        gtmAtomPwmASetDutyCycle(duty);
+        gtmAtomPwmBSetDutyCycle(duty);
+    }
+
+    motorStop();  // 마지막에 완전 정지
+}
+
+void motorHardBraking(int duty)
+{
+    // 모터 회전 방향: 역회전
+    MODULE_P10.OUT.B.P1 = 0;
+    MODULE_P10.OUT.B.P2 = 0;
+
     gtmAtomPwmASetDutyCycle(duty);
     gtmAtomPwmBSetDutyCycle(duty);
+
+    delayMs(200);
+
+    motorStop();  // 마지막에 완전 정지
 }
 
 void motorMoveForward(int duty)

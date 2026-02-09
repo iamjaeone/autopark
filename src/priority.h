@@ -17,7 +17,6 @@
 
 #define ISR_PRIORITY_STM0 50
 
-
 #define ISR_PRIORITY_CAN_TX 52
 #define ISR_PRIORITY_CAN_RX 51
 
